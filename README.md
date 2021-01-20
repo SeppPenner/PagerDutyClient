@@ -15,19 +15,13 @@ The assembly was written and tested in Net 5.0.
 [![Gitter](https://badges.gitter.im/PagerDutyClient/community.svg)](https://gitter.im/PagerDutyClient/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## Available for
-* NetFramework 4.6
-* NetFramework 4.6.2
-* NetFramework 4.7
-* NetFramework 4.7.2
-* NetFramework 4.8
 * NetStandard 2.0
 * NetStandard 2.1
 * NetCore 2.1
 * NetCore 3.1
 * Net 5.0
 
-## Net Core and Net Framework latest and LTS versions
-* https://dotnet.microsoft.com/download/dotnet-framework
+## Net Core and Net latest and LTS versions
 * https://dotnet.microsoft.com/download/dotnet-core
 * https://dotnet.microsoft.com/download/dotnet/5.0
 
