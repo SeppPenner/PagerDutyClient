@@ -25,7 +25,7 @@ The assembly was written and tested in Net 5.0.
 * https://dotnet.microsoft.com/download/dotnet-core
 * https://dotnet.microsoft.com/download/dotnet/5.0
 
-## Basic usage:
+## Basic usage
 
 ```csharp
 var logger = Log.ForContext<SomeContext>();
