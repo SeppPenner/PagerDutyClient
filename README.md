@@ -17,7 +17,6 @@ The assembly was written and tested in Net 5.0.
 ## Available for
 * NetStandard 2.0
 * NetStandard 2.1
-* NetCore 2.1
 * NetCore 3.1
 * Net 5.0
 
