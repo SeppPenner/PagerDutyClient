@@ -2,7 +2,6 @@ PagerDutyClient
 ====================================
 
 PagerDutyClient is a library to send alarms to PagerDuty. Use the API at https://developer.pagerduty.com/docs/events-api-v2/trigger-events/.
-The assembly was written and tested in Net 5.0.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/4tkko56irgvnh0w9?svg=true)](https://ci.appveyor.com/project/SeppPenner/pagerdutyclient)
 [![GitHub issues](https://img.shields.io/github/issues/SeppPenner/PagerDutyClient.svg)](https://github.com/SeppPenner/PagerDutyClient/issues)
@@ -19,6 +18,7 @@ The assembly was written and tested in Net 5.0.
 * NetStandard 2.1
 * NetCore 3.1
 * Net 5.0
+* Net 6.0
 
 ## Net Core and Net latest and LTS versions
 * https://dotnet.microsoft.com/download/dotnet-core
