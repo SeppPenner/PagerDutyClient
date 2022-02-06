@@ -10,7 +10,6 @@
 namespace PagerDutyClient
 {
     using System;
-    using System.Diagnostics.CodeAnalysis;
     using System.Net.Http;
     using System.Text;
     using System.Threading.Tasks;
@@ -22,7 +21,6 @@ namespace PagerDutyClient
     /// <summary>
     /// The PagerDuty client.
     /// </summary>
-    // ReSharper disable once UnusedMember.Global
     public class PagerDutyClient
     {
         /// <summary>
@@ -66,11 +64,6 @@ namespace PagerDutyClient
         /// <param name="source">The source.</param>
         /// <param name="summary">The summary.</param>
         /// <returns>A <see cref="Task"/> representing any asynchronous operation.</returns>
-        [SuppressMessage(
-            "StyleCop.CSharp.DocumentationRules",
-            "SA1650:ElementDocumentationMustBeSpelledCorrectly",
-            Justification = "Reviewed. Suppression is OK here.")]
-        // ReSharper disable once UnusedMember.Global
         public async Task Send(EventAction eventAction, string routingKey, Severity severity, string source, string summary)
         {
             var dtoPagerDuty = new DtoPagerDuty
@@ -88,10 +81,6 @@ namespace PagerDutyClient
         /// </summary>
         /// <param name="dtoPagerDuty">The DTO object to send.</param>
         /// <returns>A <see cref="Task"/> representing any asynchronous operation.</returns>
-        [SuppressMessage(
-            "StyleCop.CSharp.DocumentationRules",
-            "SA1650:ElementDocumentationMustBeSpelledCorrectly",
-            Justification = "Reviewed. Suppression is OK here.")]
         private async Task Send(DtoPagerDuty dtoPagerDuty)
         {
             try
