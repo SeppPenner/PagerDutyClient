@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="EventAction.cs" company="Hämmer Electronics">
 //   Copyright (c) All rights reserved.
 // </copyright>
@@ -7,26 +7,25 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace PagerDutyClient
+namespace PagerDutyClient;
+
+/// <summary>
+/// The PagerDuty event action.
+/// </summary>
+public enum EventAction
 {
     /// <summary>
-    /// The PagerDuty event action.
+    /// The PagerDuty trigger event action.
     /// </summary>
-    public enum EventAction
-    {
-        /// <summary>
-        /// The PagerDuty trigger event action.
-        /// </summary>
-        Trigger,
+    Trigger,
 
-        /// <summary>
-        /// The PagerDuty acknowledge event action.
-        /// </summary>
-        Acknowledge,
+    /// <summary>
+    /// The PagerDuty acknowledge event action.
+    /// </summary>
+    Acknowledge,
 
-        /// <summary>
-        /// The PagerDuty resolve event action.
-        /// </summary>
-        Resolve
-    }
+    /// <summary>
+    /// The PagerDuty resolve event action.
+    /// </summary>
+    Resolve
 }
