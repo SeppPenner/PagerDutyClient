@@ -16,7 +16,7 @@
     <RepositoryUrl>https://github.com/SeppPenner/PagerDutyClient</RepositoryUrl>
     <PackageIcon>Icon.png</PackageIcon>
     <RepositoryType>Github</RepositoryType>
-    <PackageReleaseNotes>Version 1.0.5.0 (2022-02-16): Added nullable checks, added editorconfig, added file scoped namespaces, added global usings.</PackageReleaseNotes>
+    <PackageReleaseNotes>Version 1.0.6.0 (2022-10-30): Updated nuget packages.</PackageReleaseNotes>
     <PackageLicenseFile>License.txt</PackageLicenseFile>
     <LangVersion>latest</LangVersion>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
