@@ -16,7 +16,6 @@ PagerDutyClient is a library to send alarms to PagerDuty. Use the API at https:/
 ## Available for
 * NetStandard 2.0
 * NetStandard 2.1
-* NetCore 3.1
 * Net 5.0
 * Net 6.0
 
