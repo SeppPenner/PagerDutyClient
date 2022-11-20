@@ -7,7 +7,7 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace PagerDutyClient;
+namespace PagerDutyClient.Enumeration;
 
 /// <summary>
 /// The PagerDuty severity.
@@ -15,22 +15,22 @@ namespace PagerDutyClient;
 public enum Severity
 {
     /// <summary>
-    /// The PagerDuty information severity.
+    /// The information severity.
     /// </summary>
     Information,
 
     /// <summary>
-    /// The PagerDuty warning severity.
+    /// The warning severity.
     /// </summary>
     Warning,
 
     /// <summary>
-    /// The PagerDuty error severity.
+    /// The error severity.
     /// </summary>
     Error,
 
     /// <summary>
-    /// The PagerDuty critical severity.
+    /// The critical severity.
     /// </summary>
     Critical
 }

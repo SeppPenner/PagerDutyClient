@@ -1,36 +1,42 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="DtoPagerDuty.cs" company="Hämmer Electronics">
+// <copyright file="DtoEvent.cs" company="Hämmer Electronics">
 //   Copyright (c) All rights reserved.
 // </copyright>
 // <summary>
-//   The DTO class to transfer the data for PagerDuty.
+//   The DTO class to transfer the data for the PagerDuty events API.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace PagerDutyClient;
+namespace PagerDutyClient.Events;
 
 /// <summary>
-/// The DTO class to transfer the data for PagerDuty.
+/// The DTO class to transfer the data for the PagerDuty events API.
 /// </summary>
 [JsonSchemaFlatten]
 [Serializable]
-public class DtoPagerDuty
+internal class DtoEvent
 {
     /// <summary>
     /// Gets or sets the routing key.
     /// </summary>
     [JsonProperty("routing_key")]
-    public string Routing_Key { get; set; } = string.Empty;
+    public string RoutingKey { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the event action.
     /// </summary>
     [JsonProperty("event_action")]
-    public string Event_Action { get; set; } = string.Empty;
+    public string EventAction { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the payload.
     /// </summary>
     [JsonProperty("payload")]
-    public DtoPagerDutyPayload Payload { get; set; } = new();
+    public DtoEventPayload Payload { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the deduplication key.
+    /// </summary>
+    [JsonProperty("dedup_key")]
+    public string DeduplicationKey { get; set; } = string.Empty;
 }

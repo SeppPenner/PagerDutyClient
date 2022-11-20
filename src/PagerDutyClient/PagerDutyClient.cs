@@ -15,7 +15,7 @@ namespace PagerDutyClient;
 public class PagerDutyClient
 {
     /// <summary>
-    /// The Http client.
+    /// The HTTP client.
     /// </summary>
     private readonly HttpClient httpClient;
 
@@ -25,107 +25,267 @@ public class PagerDutyClient
     private readonly ILogger logger;
 
     /// <summary>
-    ///     The JSON serializer settings.
+    /// The JSON serializer settings.
     /// </summary>
     private readonly JsonSerializerSettings serializerSettings;
+
+    /// <summary>
+    /// The API token.
+    /// </summary>
+    private readonly string apiToken;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PagerDutyClient"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
-    /// <param name="baseAddress">The PagerDuty API base address.</param>
-    public PagerDutyClient(ILogger logger, string baseAddress = "https://events.pagerduty.com")
+    /// <param name="apiToken">The API token.</param>
+    /// <param name="apiBaseAddress">The PagerDuty API base address.</param>
+    public PagerDutyClient(ILogger logger, string apiToken, string apiBaseAddress = "https://api.pagerduty.com")
     {
         this.logger = logger;
-        this.httpClient = new HttpClient { BaseAddress = new Uri(baseAddress) };
+        this.apiToken = apiToken;
+        this.httpClient = new HttpClient { BaseAddress = new Uri(apiBaseAddress) };
 
         // Set JSON serializer settings
         this.serializerSettings = new JsonSerializerSettings
         {
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-            Formatting = Formatting.None
+            Formatting = Formatting.None,
+            NullValueHandling = NullValueHandling.Ignore
         };
     }
 
     /// <summary>
-    /// Sends an alert to PagerDuty. Check <para>https://developer.pagerduty.com/docs/events-api-v2/trigger-events/</para> as well.
+    /// Gets the incidents for all services with the given identifiers. Check <para>https://developer.pagerduty.com/api-reference/</para> as well.
     /// </summary>
-    /// <param name="eventAction">The event action.</param>
-    /// <param name="routingKey">The routing key.</param>
-    /// <param name="severity">The severity.</param>
-    /// <param name="source">The source.</param>
-    /// <param name="summary">The summary.</param>
-    /// <returns>A <see cref="Task"/> representing any asynchronous operation.</returns>
-    public async Task Send(EventAction eventAction, string routingKey, Severity severity, string source, string summary)
+    /// <param name="serviceIds">The service identifiers.</param>
+    /// <param name="sortBy">The sort by filter, defaults to 'created_at:DESC'.</param>
+    /// <param name="limit">The result limit, defaults to 25.</param>
+    /// <exception cref="ArgumentException">Thrown if any of the given arguments is invalid.</exception>
+    /// <returns>The found <see cref="DtoIncidentsResult"/> or null.</returns>
+    public async Task<DtoIncidentsResult?> GetIncidentsForServices(List<string> serviceIds, string sortBy = "created_at:DESC", int limit = 25)
     {
-        var dtoPagerDuty = new DtoPagerDuty
+        if (!serviceIds.Any())
         {
-            Event_Action = GetEventAction(eventAction),
-            Routing_Key = routingKey,
-            Payload = new DtoPagerDutyPayload { Severity = GetSeverity(severity), Source = source, Summary = summary }
-        };
+            throw new ArgumentException("The service identifiers are empty.", nameof(serviceIds));
+        }
 
-        await this.Send(dtoPagerDuty);
+        if (string.IsNullOrWhiteSpace(sortBy))
+        {
+            throw new ArgumentException("The sort by filter is empty.", nameof(sortBy));
+        }
+
+        if (limit <= 0)
+        {
+            throw new ArgumentException("The limit is invalid.", nameof(limit));
+        }
+
+        return await this.GetFromApi<DtoIncidentsResult?>($"incidents?sort_by={sortBy}&limit={limit}&service_ids[]={string.Join(",", serviceIds)}");
     }
 
     /// <summary>
-    /// Sends an alert to PagerDuty. Check <para>https://developer.pagerduty.com/docs/events-api-v2/trigger-events/</para> as well.
+    /// Gets the incidents for all services with the given identifier. Check <para>https://developer.pagerduty.com/api-reference/</para> as well.
     /// </summary>
-    /// <param name="dtoPagerDuty">The DTO object to send.</param>
-    /// <returns>A <see cref="Task"/> representing any asynchronous operation.</returns>
-    private async Task Send(DtoPagerDuty dtoPagerDuty)
+    /// <param name="serviceId">The service identifier.</param>
+    /// <param name="sortBy">The sort by filter, defaults to 'created_at:DESC'.</param>
+    /// <param name="limit">The result limit, defaults to 25.</param>
+    /// <exception cref="ArgumentException">Thrown if any of the given arguments is invalid.</exception>
+    /// <returns>The found <see cref="DtoIncidentsResult"/> or null.</returns>
+    public async Task<DtoIncidentsResult?> GetIncidentsForService(string serviceId, string sortBy = "created_at:DESC", int limit = 25)
+    {
+        if (string.IsNullOrWhiteSpace(serviceId))
+        {
+            throw new ArgumentException("The service identifier is empty.", nameof(serviceId));
+        }
+
+        if (string.IsNullOrWhiteSpace(sortBy))
+        {
+            throw new ArgumentException("The sort by filter is empty.", nameof(sortBy));
+        }
+
+        if (limit <= 0)
+        {
+            throw new ArgumentException("The limit is invalid.", nameof(limit));
+        }
+
+        return await this.GetFromApi<DtoIncidentsResult?>($"incidents?sort_by={sortBy}&limit={limit}&service_ids[]={serviceId}");
+    }
+
+    /// <summary>
+    /// Gets the incidents for all services. Check <para>https://developer.pagerduty.com/api-reference/</para> as well.
+    /// </summary>
+    /// <param name="sortBy">The sort by filter, defaults to 'created_at:DESC'.</param>
+    /// <param name="limit">The result limit, defaults to 25.</param>
+    /// <exception cref="ArgumentException">Thrown if any of the given arguments is invalid.</exception>
+    /// <returns>The found <see cref="DtoIncidentsResult"/> or null.</returns>
+    public async Task<DtoIncidentsResult?> GetIncidents(string sortBy = "created_at:DESC", int limit = 25)
+    {
+        if (string.IsNullOrWhiteSpace(sortBy))
+        {
+            throw new ArgumentException("The sort by filter is empty.", nameof(sortBy));
+        }
+
+        if (limit <= 0)
+        {
+            throw new ArgumentException("The limit is invalid.", nameof(limit));
+        }
+
+        return await this.GetFromApi<DtoIncidentsResult?>($"incidents?sort_by={sortBy}&limit={limit}");
+    }
+
+    /// <summary>
+    /// Resolves the alert. Check <para>https://developer.pagerduty.com/api-reference/</para> as well.
+    /// </summary>
+    /// <param name="identifier">The alert identifier.</param>
+    /// <param name="fromEmail">The from email address.</param>
+    /// <param name="resolution">The resolution if any (Needed for resolve only).</param>
+    /// <exception cref="ArgumentException">Thrown if any of the given arguments is invalid.</exception>
+    /// <returns>The found <see cref="DtoIncidentResult"/> or null.</returns>
+    public async Task<DtoIncidentResult?> ResolveAlert(string identifier, string fromEmail, string resolution)
+    {
+        if (string.IsNullOrWhiteSpace(identifier))
+        {
+            throw new ArgumentException("The identifier is empty.", nameof(identifier));
+        }
+
+        if (string.IsNullOrWhiteSpace(fromEmail))
+        {
+            throw new ArgumentException("The from email is empty.", nameof(fromEmail));
+        }
+
+        if (string.IsNullOrWhiteSpace(resolution))
+        {
+            throw new ArgumentException("The resolution is empty.", nameof(resolution));
+        }
+
+        return await this.PutToApi<DtoIncidentResult?>($"incidents/{identifier}", fromEmail, IncidentRequestType.Resolved, resolution);
+    }
+
+    /// <summary>
+    /// Acknowledges the alert. Check <para>https://developer.pagerduty.com/api-reference/</para> as well.
+    /// </summary>
+    /// <param name="identifier">The alert identifier.</param>
+    /// <param name="fromEmail">The from email address.</param>
+    /// <exception cref="ArgumentException">Thrown if any of the given arguments is invalid.</exception>
+    /// <returns>The found <see cref="DtoIncidentResult"/> or null.</returns>
+    public async Task<DtoIncidentResult?> AcknowledgeAlert(string identifier, string fromEmail)
+    {
+        if (string.IsNullOrWhiteSpace(identifier))
+        {
+            throw new ArgumentException("The identifier is empty.", nameof(identifier));
+        }
+
+        if (string.IsNullOrWhiteSpace(fromEmail))
+        {
+            throw new ArgumentException("The from email is empty.", nameof(fromEmail));
+        }
+
+        return await this.PutToApi<DtoIncidentResult?>($"incidents/{identifier}", fromEmail, IncidentRequestType.Acknowledged);
+    }
+
+    /// <summary>
+    /// Puts data to the PagerDuty API. Check <para>https://developer.pagerduty.com/api-reference/</para> as well.
+    /// </summary>
+    /// <typeparam name="T">The type of object.</typeparam>
+    /// <param name="url">The url.</param>
+    /// <param name="incidentRequestType">The incident request type.</param>
+    /// <param name="fromEmail">The from email address.</param>
+    /// <param name="resolution">The resolution if any (Needed for resolve only).</param>
+    /// <returns>A new object of type <see cref="T"/> or null.</returns>
+    private async Task<T?> PutToApi<T>(string url, string fromEmail, IncidentRequestType incidentRequestType, string? resolution = null)
     {
         try
         {
+            if (this.httpClient.DefaultRequestHeaders.Authorization is null)
+            {
+                this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(HeaderKeys.Token, this.apiToken);
+            }
+
+            if (!this.httpClient.DefaultRequestHeaders.Contains(HeaderKeys.From))
+            {
+                this.httpClient.DefaultRequestHeaders.Add(HeaderKeys.From, fromEmail);
+            }
+
+            var dtoPagerDuty = new DtoIncidentRequest
+            {
+                Incident = new()
+                {
+                    Type = "incident_reference",
+                    Status = GetIncidentRequestType(incidentRequestType),
+                    Resolution = incidentRequestType == IncidentRequestType.Resolved ? resolution : null
+                }
+            };
             var stringPayload = JsonConvert.SerializeObject(dtoPagerDuty, this.serializerSettings);
             var content = new StringContent(stringPayload, Encoding.UTF8, "application/json");
-            var result = await this.httpClient.PostAsync("v2/enqueue", content).ConfigureAwait(false);
+            var result = await this.httpClient.PutAsync(url, content).ConfigureAwait(false);
+            var stringValue = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             if (result.IsSuccessStatusCode)
             {
-                this.logger.Information("Added PagerDuty alert with data {@Data}", dtoPagerDuty);
+                this.logger.Information("Got PagerDuty data {@Data}", result);
+                return JsonConvert.DeserializeObject<T>(stringValue);
             }
             else
             {
-                this.logger.Error("Adding PagerDuty alert failed with data {@Data}", dtoPagerDuty);
+                this.logger.Error("Getting PagerDuty data failed {@Data}, Message {Message}", result, stringValue);
             }
         }
         catch (Exception ex)
         {
             this.logger.Error("An error occurred: {Exception}.", ex);
         }
+
+        return default;
     }
 
     /// <summary>
-    /// Converts the <see cref="Severity"/> to a <see cref="string"/>.
+    /// Gets data from the PagerDuty API. Check <para>https://developer.pagerduty.com/api-reference/</para> as well.
     /// </summary>
-    /// <param name="severity">The <see cref="Severity"/>.</param>
-    /// <returns>A <see cref="Severity"/> as <see cref="string"/>.</returns>
-    private static string GetSeverity(Severity severity)
+    /// <typeparam name="T">The type of object.</typeparam>
+    /// <param name="url">The url.</param>
+    /// <returns>A new object of type <see cref="T"/> or null.</returns>
+    private async Task<T?> GetFromApi<T>(string url)
     {
-        return severity switch
+        try
         {
-            Severity.Information => "info",
-            Severity.Warning => "warning",
-            Severity.Error => "error",
-            Severity.Critical => "critical",
-            _ => "info"
-        };
+            if (this.httpClient.DefaultRequestHeaders.Authorization is null)
+            {
+                this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(HeaderKeys.Token, this.apiToken);
+            }
+
+            var result = await this.httpClient.GetAsync(url).ConfigureAwait(false);
+            var stringValue = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+            if (result.IsSuccessStatusCode)
+            {
+                this.logger.Information("Got PagerDuty data {@Data}", result);
+                return JsonConvert.DeserializeObject<T>(stringValue);
+            }
+            else
+            {
+                this.logger.Error("Getting PagerDuty data failed {@Data}, Message {Message}", result, stringValue);
+            }
+        }
+        catch (Exception ex)
+        {
+            this.logger.Error("An error occurred: {Exception}.", ex);
+        }
+
+        return default;
     }
 
     /// <summary>
-    /// Converts the <see cref="EventAction"/> to a <see cref="string"/>.
+    /// Converts the <see cref="IncidentRequestType"/> to a <see cref="string"/>.
     /// </summary>
-    /// <param name="eventAction">The <see cref="EventAction"/>.</param>
-    /// <returns>A <see cref="EventAction"/> as <see cref="string"/>.</returns>
-    private static string GetEventAction(EventAction eventAction)
+    /// <param name="incidentRequestType">The <see cref="IncidentRequestType"/>.</param>
+    /// <returns>A <see cref="IncidentRequestType"/> as <see cref="string"/>.</returns>
+    private static string GetIncidentRequestType(IncidentRequestType incidentRequestType)
     {
-        return eventAction switch
+        return incidentRequestType switch
         {
-            EventAction.Trigger => "trigger",
-            EventAction.Acknowledge => "acknowledge",
-            EventAction.Resolve => "resolve",
-            _ => "trigger"
+            IncidentRequestType.Resolved => "resolved",
+            IncidentRequestType.Acknowledged => "acknowledged",
+            _ => "acknowledged"
         };
     }
 }

@@ -1,20 +1,20 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="DtoPagerDutyPayload.cs" company="Hämmer Electronics">
+// <copyright file="DtoEventPayload.cs" company="Hämmer Electronics">
 //   Copyright (c) All rights reserved.
 // </copyright>
 // <summary>
-//   The DTO class to transfer payloads for PagerDuty.
+//   The DTO class to transfer payloads for the PagerDuty events API.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace PagerDutyClient;
+namespace PagerDutyClient.Events;
 
 /// <summary>
-/// The DTO class to transfer payloads for PagerDuty.
+/// The DTO class to transfer payloads for the PagerDuty events API.
 /// </summary>
 [JsonSchemaFlatten]
 [Serializable]
-public class DtoPagerDutyPayload
+internal class DtoEventPayload
 {
     /// <summary>
     /// Gets or sets the summary.
