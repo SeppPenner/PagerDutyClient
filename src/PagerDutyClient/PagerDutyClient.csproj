@@ -16,7 +16,7 @@
     <RepositoryUrl>https://github.com/SeppPenner/PagerDutyClient</RepositoryUrl>
     <PackageIcon>Icon.png</PackageIcon>
     <RepositoryType>Github</RepositoryType>
-    <PackageReleaseNotes>Version 1.0.7.0 (2022-11-20): Removed Net5.0, added support for Net7.0, updated NuGet packages, a lot of internal changes.</PackageReleaseNotes>
+    <PackageReleaseNotes>Version 1.0.8.0 (2023-04-07): Removed NetCore3.1, Updated NuGet packages.</PackageReleaseNotes>
     <PackageLicenseFile>License.txt</PackageLicenseFile>
     <LangVersion>latest</LangVersion>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>

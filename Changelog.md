@@ -1,6 +1,7 @@
 Change history
 --------------
 
+* **Version 1.0.8.0 (2023-04-07)** : Removed NetCore3.1, Updated NuGet packages.
 * **Version 1.0.7.0 (2022-11-20)** : Removed Net5.0, added support for Net7.0, updated NuGet packages, a lot of internal changes.
 * **Version 1.0.6.0 (2022-10-30)** : Updated nuget packages.
 * **Version 1.0.5.0 (2022-02-16)** : Added nullable checks, added editorconfig, added file scoped namespaces, added global usings.
