@@ -14,14 +14,11 @@ PagerDutyClient is a library to send alarms to PagerDuty. Use the API at https:/
 [![Gitter](https://badges.gitter.im/PagerDutyClient/community.svg)](https://gitter.im/PagerDutyClient/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## Available for
-* NetStandard 2.0
-* NetStandard 2.1
-* Net 5.0
 * Net 6.0
+* Net 7.0
 
 ## Net Core and Net latest and LTS versions
-* https://dotnet.microsoft.com/download/dotnet-core
-* https://dotnet.microsoft.com/download/dotnet/5.0
+* https://dotnet.microsoft.com/download/dotnet
 
 ## Basic usage
 
