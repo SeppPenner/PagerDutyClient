@@ -191,7 +191,7 @@ public class PagerDutyClient
     /// <param name="incidentRequestType">The incident request type.</param>
     /// <param name="fromEmail">The from email address.</param>
     /// <param name="resolution">The resolution if any (Needed for resolve only).</param>
-    /// <returns>A new object of type <see cref="T"/> or null.</returns>
+    /// <returns>A new object of type <c>T</c> or null.</returns>
     private async Task<T?> PutToApi<T>(string url, string fromEmail, IncidentRequestType incidentRequestType, string? resolution = null)
     {
         try
@@ -243,7 +243,7 @@ public class PagerDutyClient
     /// </summary>
     /// <typeparam name="T">The type of object.</typeparam>
     /// <param name="url">The url.</param>
-    /// <returns>A new object of type <see cref="T"/> or null.</returns>
+    /// <returns>A new object of type <c>T</c> or null.</returns>
     private async Task<T?> GetFromApi<T>(string url)
     {
         try
