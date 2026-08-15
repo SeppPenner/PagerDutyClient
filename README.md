@@ -25,15 +25,37 @@ PagerDutyClient is a library to send alarms to PagerDuty. Use the API at https:/
 
 ## Basic usage
 
+Sending an alarm goes through the events API. It needs no API token, the routing key of the
+integration identifies the caller.
+
 ```csharp
+using PagerDutyClient;
+using PagerDutyClient.Enumeration;
+
 var logger = Log.ForContext<SomeContext>();
-var pagerDutyClient = new PagerDutyClient(logger);
-await pagerDutyClient.Send(
-    EventAction.Trigger,
+var pagerDutyClient = new PagerDutyClientV2(logger);
+await pagerDutyClient.TriggerAlert(
     "78e9279b9fa84b7b8e9f1ec7b9b85fef",
     Severity.Critical,
     "MyService",
     "Some error.");
+```
+
+`AcknowledgeAlert` and `ResolveAlert` take the same arguments plus the deduplication key of the
+alert that is being acknowledged or resolved.
+
+Reading incidents and acknowledging or resolving them goes through the REST API, which needs an API
+token. That client has the same name as its namespace, so it needs a using alias or its full name.
+
+```csharp
+using PagerDutyClient.Enumeration;
+
+using RestClient = PagerDutyClient.PagerDutyClient;
+
+var logger = Log.ForContext<SomeContext>();
+var pagerDutyClient = new RestClient(logger, "y_NbAkKc66ryYTWUXYEu");
+var incidents = await pagerDutyClient.GetIncidentsForService("PIJ90N7");
+await pagerDutyClient.AcknowledgeAlert("PT4KHLK", "someone@example.com");
 ```
 
 The project can be found on [nuget](https://www.nuget.org/packages/HaemmerElectronics.SeppPenner.PagerDutyClient/).

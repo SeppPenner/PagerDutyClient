@@ -122,14 +122,14 @@ Do not silently "clean up" these, they are existing behaviour:
   that package. Nothing in the library generates a JSON schema, and the attribute has no effect on
   the Newtonsoft serialization that actually runs. The same is true for `[Serializable]`. Both are
   decorative, and both are on every DTO, so new DTOs get them too.
-- **`Incidents/DtoIncidents Result.cs` has a space in its file name.** The type inside is
-  `DtoIncidentsResult` and the copyright header names the file `DtoIncidentsResult.cs`, so the space
-  is a typo that survived since 2022.
+- **The class `PagerDutyClient` cannot be used by its simple name.** It sits in the namespace
+  `PagerDutyClient`, so a consumer writing `new PagerDutyClient(...)` gets
+  `CS0118: PagerDutyClient is a namespace but is used like a type`. Only
+  `new PagerDutyClient.PagerDutyClient(...)` or a using alias compiles. `PagerDutyClientV2` is not
+  affected. Renaming the class would be a breaking change of the package, so the `README.md` sample
+  shows the alias instead.
 - **Two header comment styles.** The files under `Incidents/` open with `//---` without a space,
   every other file with `// ---`. Cosmetic, not worth a commit of its own.
-- **The `README.md` sample does not compile.** It shows `new PagerDutyClient(logger)` and a method
-  `Send(...)`. The constructor needs an API token and there is no `Send`, the Events API method is
-  `PagerDutyClientV2.TriggerAlert`.
 - **AppVeyor badge without CI in the repository.** `README.md` links an AppVeyor build that is
   configured outside of this repository. There is no `.github` folder and no pipeline file here.
 - **`README.md`, `Changelog.md`, `Icon.png` and `License.txt` are packed into the package.** They
