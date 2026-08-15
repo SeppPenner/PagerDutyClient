@@ -48,15 +48,16 @@ Repository root: `README.md` (the only user documentation, it is packed into the
 dotnet build src/PagerDutyClient.sln -c Release
 ```
 
-- Target frameworks `net8.0;net9.0`, so every change is compiled twice. Nothing in the code is
-  Windows specific.
+- Target frameworks `net8.0;net10.0`, so every change is compiled twice. Nothing in the code is
+  Windows specific. Net 9.0 was dropped in version 1.0.13.0 because it is out of support.
 - Almost all build properties live directly in `src/PagerDutyClient/PagerDutyClient.csproj`.
   `src/Directory.Build.props` exists but sets nothing except `GenerateDocumentationFile`, which is
   why a missing XML doc comment is a build error here.
 - `TreatWarningsAsErrors` is enabled, so every warning breaks the build, NuGet warnings (`NU****`)
   from restore included. A clean build reports zero warnings, keep it that way.
 - `NU1803` (HTTP source usage during restore) is the one warning suppressed via `NoWarn`. Fix
-  warnings instead of extending that list.
+  warnings instead of extending that list. `NuGetAudit` and `NuGetAuditMode=all` are on, so a
+  vulnerable transitive package fails the build too.
 - Versions come from GitVersion.MsBuild out of the git tags, for example `1.0.13-3` for the third
   commit after tag `1.0.12`. Never edit a version property or an assembly version by hand.
 - Restore needs nuget.org. Several private feeds (DevExpress, Telerik, GitHub Packages) are
