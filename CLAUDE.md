@@ -1,0 +1,173 @@
+# Project rules for Claude
+
+## What this is
+
+PagerDutyClient is a small NuGet library that sends alarms to PagerDuty and reads incidents back.
+The package id is `HaemmerElectronics.SeppPenner.PagerDutyClient`, the assembly and the root
+namespace are `PagerDutyClient`. `GeneratePackageOnBuild` is on, so every Release build writes a
+`.nupkg` and a `.snupkg` into `src/PagerDutyClient/bin/Release`. `BuildAndPushPackage.bat` pushes
+both to nuget.org and to GitHub Packages.
+
+The library holds two independent clients for two different PagerDuty APIs. They share nothing: no
+base class, no interface, no HTTP client.
+
+- `PagerDutyClientV2` talks to the Events API v2 at `https://events.pagerduty.com`, one POST to
+  `v2/enqueue` per call. It takes no API token, the routing key is a parameter of every call and
+  travels in the payload. `TriggerAlert`, `AcknowledgeAlert` and `ResolveAlert` return `Task`
+  without a result.
+- `PagerDutyClient` talks to the REST API v2 at `https://api.pagerduty.com` and needs an API token
+  in the constructor. `GetIncidents`, `GetIncidentsForService`, `GetIncidentsForServices`,
+  `AcknowledgeAlert` and `ResolveAlert` return a DTO or `null`.
+
+One solution `src/PagerDutyClient.sln` with exactly one project,
+`src/PagerDutyClient/PagerDutyClient.csproj`, `OutputType` `Library`. There is no demo project and
+no test project.
+
+Layout inside `src/PagerDutyClient`:
+
+- `PagerDutyClient.cs`: the REST API client. The private helpers `GetFromApi` and `PutToApi` do the
+  HTTP work, the private static `GetIncidentRequestType` maps the enum to the wire value. Keep new
+  logic in that shape.
+- `PagerDutyClientV2.cs`: the Events API client, with `SendToEventsApi`, `GetSeverity` and
+  `GetEventAction` as its private helpers.
+- `Constants/HeaderKeys.cs`: the two request header names, `From` and `Token`.
+- `Enumeration/`: `Severity` is public, `EventAction` and `IncidentRequestType` are internal.
+- `Events/`: `DtoEvent` and `DtoEventPayload`, the request body of the Events API, both internal.
+- `Incidents/`: 18 DTOs of the REST API. The result types are public, the request types
+  `DtoIncidentRequest` and `DtoIncidentDataRequest` are internal.
+- `GlobalUsings.cs`: all usings of the project.
+
+Repository root: `README.md` (the only user documentation, it is packed into the NuGet package),
+`Changelog.md`, `Updating.md` (the manual release checklist from before these instructions existed),
+`License.txt` (MIT), `Icon.png`, `BuildAndPushPackage.bat`, `Delete-BIN-OBJ-Folders.bat`,
+`.gitattributes` and `.gitignore`. There is no `HowToUse.md` and no screenshots.
+
+## Build
+
+```powershell
+dotnet build src/PagerDutyClient.sln -c Release
+```
+
+- Target frameworks `net8.0;net9.0`, so every change is compiled twice. Nothing in the code is
+  Windows specific.
+- Almost all build properties live directly in `src/PagerDutyClient/PagerDutyClient.csproj`.
+  `src/Directory.Build.props` exists but sets nothing except `GenerateDocumentationFile`, which is
+  why a missing XML doc comment is a build error here.
+- `TreatWarningsAsErrors` is enabled, so every warning breaks the build, NuGet warnings (`NU****`)
+  from restore included. A clean build reports zero warnings, keep it that way.
+- `NU1803` (HTTP source usage during restore) is the one warning suppressed via `NoWarn`. Fix
+  warnings instead of extending that list.
+- Versions come from GitVersion.MsBuild out of the git tags, for example `1.0.13-3` for the third
+  commit after tag `1.0.12`. Never edit a version property or an assembly version by hand.
+- Restore needs nuget.org. Several private feeds (DevExpress, Telerik, GitHub Packages) are
+  configured globally on this machine. If one of them answers 404 for a public package, restore
+  fails with `NU1301`. Then build with an explicit source:
+  `dotnet build src/PagerDutyClient.sln --source https://api.nuget.org/v3/index.json`.
+- There are no tests and no demo project, so a behaviour change is verified by reading the code and
+  by the build. Never claim a test run happened without running it.
+
+## Code conventions
+
+Follow the surrounding code, it is consistent throughout every file:
+
+- File header comment block with `<copyright file="..." company="Hämmer Electronics">` and a
+  `<summary>`, then the file-scoped namespace.
+- XML doc comments on every type and every member, private members included, no exceptions.
+  `GenerateDocumentationFile` plus `TreatWarningsAsErrors` turn a missing one into a build error.
+- `Nullable`, `ImplicitUsings` and `LangVersion latest` are enabled.
+- New `using` directives go into `GlobalUsings.cs`, inside the existing `#pragma warning disable
+  IDE0065` block, never at the top of a file. The editorconfig requires usings inside the namespace
+  (`csharp_using_directive_placement=inside_namespace:warning`), which global usings cannot satisfy,
+  that is what the pragma is for. Do not add other pragmas. The comment text in that block is German
+  because Visual Studio generated it, leave it alone.
+- Fields, properties, methods and events are always accessed with `this.` qualification
+  (`dotnet_style_qualification_for_*` at severity `warning`).
+- `src/.editorconfig` also enforces braces everywhere, no multiple blank lines, four spaces, CRLF,
+  UTF-8, file scoped namespaces, `System` usings sorted first and `IDE0005` as warning. Analyzer
+  warnings are fixed, not silenced.
+- Every DTO carries `[JsonSchemaFlatten]`, `[Serializable]` and a `[JsonProperty("snake_case")]` on
+  each member, and every reference member is initialised so that it is never null. New DTOs follow
+  that pattern.
+
+## Known quirks
+
+Do not silently "clean up" these, they are existing behaviour:
+
+- **Two clients, two APIs, no shared abstraction.** `PagerDutyClientV2` is not a newer version of
+  `PagerDutyClient`, it is a different API. V2 needs no API token because the routing key
+  authenticates the call, V1 needs one. Do not "unify" them into a base class, the two APIs
+  authenticate differently and return different shapes.
+- **Every error is swallowed.** `GetFromApi`, `PutToApi` and `SendToEventsApi` catch every
+  exception, write it to the `ILogger` and return `default` or nothing. A caller cannot tell an
+  empty result from a failed request, and a non success status code is logged but never thrown. That
+  is deliberate for an alarming library that must not take the caller down with it. Whoever changes
+  it changes the contract of the whole package.
+- **One `HttpClient` per instance, never disposed.** Both classes create their `HttpClient` in the
+  constructor and neither implements `IDisposable`. Long lived client instances are the intended
+  usage.
+- **The mapping helpers have a silent default branch.** `GetSeverity` falls back to `info`,
+  `GetEventAction` to `trigger` and `GetIncidentRequestType` to `acknowledged`. A new enum member
+  without a new switch arm therefore ships as a wrong wire value instead of an exception.
+- **`EventAction` and `IncidentRequestType` are internal, `Severity` is public.** A caller picks the
+  action by calling `TriggerAlert`, `AcknowledgeAlert` or `ResolveAlert`, not by passing an enum.
+  Making them public would add a second way to do the same thing.
+- **`NJsonSchema` is referenced for one attribute.** `[JsonSchemaFlatten]` on the DTOs comes from
+  that package. Nothing in the library generates a JSON schema, and the attribute has no effect on
+  the Newtonsoft serialization that actually runs. The same is true for `[Serializable]`. Both are
+  decorative, and both are on every DTO, so new DTOs get them too.
+- **`Incidents/DtoIncidents Result.cs` has a space in its file name.** The type inside is
+  `DtoIncidentsResult` and the copyright header names the file `DtoIncidentsResult.cs`, so the space
+  is a typo that survived since 2022.
+- **Two header comment styles.** The files under `Incidents/` open with `//---` without a space,
+  every other file with `// ---`. Cosmetic, not worth a commit of its own.
+- **The `README.md` sample does not compile.** It shows `new PagerDutyClient(logger)` and a method
+  `Send(...)`. The constructor needs an API token and there is no `Send`, the Events API method is
+  `PagerDutyClientV2.TriggerAlert`.
+- **AppVeyor badge without CI in the repository.** `README.md` links an AppVeyor build that is
+  configured outside of this repository. There is no `.github` folder and no pipeline file here.
+- **`README.md`, `Changelog.md`, `Icon.png` and `License.txt` are packed into the package.** They
+  are pulled in from the repository root by four `None` items in the csproj, `README.md` also via
+  `PackageReadmeFile`. Renaming or moving one of them breaks the package build.
+- **`src/PagerDutyClient.sln.DotSettings`** is tracked and holds nothing but a ReSharper user
+  dictionary (`H_00E4mmer`, `Softwareentwicklung`). Leave it alone.
+- **`.gitattributes` sets `* text=auto`** and every rule of the Visual Studio template below it is
+  commented out. `core.autocrlf` is `true` in this clone, so the working tree is CRLF while git
+  stores LF. Any binary file added later needs its own rule.
+
+## Releasing
+
+1. Make the change.
+2. Add an entry at the top of `Changelog.md` in the existing format:
+   `* **Version 1.0.13.0 (2026-08-15)** : Short description.`
+3. Update `PackageReleaseNotes` in `src/PagerDutyClient/PagerDutyClient.csproj` to the same text,
+   in the format `Version 1.0.13.0 (2026-08-15): Short description.`
+4. Commit that.
+5. Tag the commit with the plain version number, no `v` prefix (`1.0.12`, `1.0.11`, ...). The
+   existing tags are lightweight tags, create new ones the same way.
+6. Push the commits and the tag.
+7. Only then run `BuildAndPushPackage.bat`. The order matters: the package version comes from
+   GitVersion, so building before the tag exists burns a prerelease version such as `1.0.13-3` into
+   the package. The script needs `NUGET_API_KEY` and `GITHUB_API_KEY` in the environment and ends in
+   a `PAUSE`.
+
+The version in the `Changelog.md` has four parts (`1.0.13.0`), the tag has three (`1.0.13`).
+`Updating.md` describes the same process in five short lines, keep the two in sync.
+
+## Git
+
+- **Never amend a commit.** No `git commit --amend`, not for a typo in the message, not to add a
+  forgotten file, not even when the commit is still local. Write a follow-up commit instead. The
+  release versions come from tags on exact commits, an amended commit leaves its tag pointing at a
+  commit that no longer exists in the branch.
+
+## Writing style
+
+- Commit messages are written **in English only**: short, precise subject line, explanatory body
+  when needed.
+- Code comments and comments in project files such as `.csproj` are **always English**, regardless
+  of the language used in the conversation.
+- **No em dashes or en dashes** (`—`, `–`), neither in prose, commit messages, code comments nor
+  documentation. Use a regular hyphen, comma, colon, parentheses or a separate sentence.
+- German texts (documentation, chat replies) always use real umlauts and ß, never ASCII
+  transliterations such as `ae`, `oe`, `ue` or `ss`. Identifiers, file names and configuration keys
+  stay unchanged where umlauts are technically undesirable.
