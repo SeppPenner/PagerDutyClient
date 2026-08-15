@@ -1,6 +1,7 @@
 Change history
 --------------
 
+* **Version 1.0.13.0 (2026-08-15)** : Removed support for Net9.0 as it is out of support, added support for Net10.0, updated NuGet packages, fixed the authorization header of the REST API client that made every call fail with 401, fixed the service identifier query parameter that was sent as a comma separated list, a trigger no longer sends an empty deduplication key, fixed the usage sample in the readme, added a test project.
 * **Version 1.0.12.0 (2024-11-24)** : Removed support for Net6.0, added support for Net9.0, updated NuGet packages.
 * **Version 1.0.11.0 (2024-05-16)** : Removed support for Net7.0.
 * **Version 1.0.10.0 (2023-12-07)** : Updated NuGet packages, added support for Net8.0.
