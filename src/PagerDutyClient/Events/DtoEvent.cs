@@ -35,8 +35,9 @@ internal class DtoEvent
     public DtoEventPayload Payload { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets the deduplication key.
+    /// Gets or sets the deduplication key. This is the one property that stays null when it is not used,
+    /// because the serializer drops null values and the API generates a key itself for a trigger without one.
     /// </summary>
     [JsonProperty("dedup_key")]
-    public string DeduplicationKey { get; set; } = string.Empty;
+    public string? DeduplicationKey { get; set; }
 }

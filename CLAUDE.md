@@ -87,7 +87,8 @@ Follow the surrounding code, it is consistent throughout every file:
   warnings are fixed, not silenced.
 - Every DTO carries `[JsonSchemaFlatten]`, `[Serializable]` and a `[JsonProperty("snake_case")]` on
   each member, and every reference member is initialised so that it is never null. New DTOs follow
-  that pattern.
+  that pattern. The one exception is `DtoEvent.DeduplicationKey`, which stays nullable on purpose so
+  that `NullValueHandling.Ignore` drops it from the payload of a trigger.
 
 ## Known quirks
 
@@ -97,6 +98,12 @@ Do not silently "clean up" these, they are existing behaviour:
   `PagerDutyClient`, it is a different API. V2 needs no API token because the routing key
   authenticates the call, V1 needs one. Do not "unify" them into a base class, the two APIs
   authenticate differently and return different shapes.
+- **`Token token=` is the header value, not a typo.** The REST API wants
+  `Authorization: Token token=<apiToken>`, so `SetAuthorizationHeader` builds the value with the
+  `token=` prefix inside it. Without the prefix every REST call answers 401, which is what versions
+  up to 1.0.12.0 did.
+- **Array query parameters are repeated, not comma separated.** `GetIncidentsForServices` builds
+  `service_ids[]=A&service_ids[]=B`. A comma separated list is read by the API as one identifier.
 - **Every error is swallowed.** `GetFromApi`, `PutToApi` and `SendToEventsApi` catch every
   exception, write it to the `ILogger` and return `default` or nothing. A caller cannot tell an
   empty result from a failed request, and a non success status code is logged but never thrown. That

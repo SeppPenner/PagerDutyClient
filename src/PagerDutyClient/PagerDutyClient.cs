@@ -80,7 +80,9 @@ public class PagerDutyClient
             throw new ArgumentException("The limit is invalid.", nameof(limit));
         }
 
-        return await this.GetFromApi<DtoIncidentsResult?>($"incidents?sort_by={sortBy}&limit={limit}&service_ids[]={string.Join(",", serviceIds)}");
+        // The API expects one service_ids[] parameter per identifier, a comma separated list is read as a single identifier.
+        var serviceIdParameters = string.Join("&", serviceIds.Select(serviceId => $"service_ids[]={serviceId}"));
+        return await this.GetFromApi<DtoIncidentsResult?>($"incidents?sort_by={sortBy}&limit={limit}&{serviceIdParameters}");
     }
 
     /// <summary>
@@ -196,10 +198,7 @@ public class PagerDutyClient
     {
         try
         {
-            if (this.httpClient.DefaultRequestHeaders.Authorization is null)
-            {
-                this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(HeaderKeys.Token, this.apiToken);
-            }
+            this.SetAuthorizationHeader();
 
             if (!this.httpClient.DefaultRequestHeaders.Contains(HeaderKeys.From))
             {
@@ -248,10 +247,7 @@ public class PagerDutyClient
     {
         try
         {
-            if (this.httpClient.DefaultRequestHeaders.Authorization is null)
-            {
-                this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(HeaderKeys.Token, this.apiToken);
-            }
+            this.SetAuthorizationHeader();
 
             var result = await this.httpClient.GetAsync(url).ConfigureAwait(false);
             var stringValue = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -272,6 +268,20 @@ public class PagerDutyClient
         }
 
         return default;
+    }
+
+    /// <summary>
+    /// Sets the authorization header of the HTTP client if it is not set yet.
+    /// </summary>
+    private void SetAuthorizationHeader()
+    {
+        if (this.httpClient.DefaultRequestHeaders.Authorization is not null)
+        {
+            return;
+        }
+
+        // The REST API expects the header value 'Token token=<apiToken>', the 'token=' prefix is part of the value and not a typo.
+        this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(HeaderKeys.Token, $"token={this.apiToken}");
     }
 
     /// <summary>
