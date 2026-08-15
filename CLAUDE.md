@@ -19,9 +19,12 @@ base class, no interface, no HTTP client.
   in the constructor. `GetIncidents`, `GetIncidentsForService`, `GetIncidentsForServices`,
   `AcknowledgeAlert` and `ResolveAlert` return a DTO or `null`.
 
-One solution `src/PagerDutyClient.sln` with exactly one project,
-`src/PagerDutyClient/PagerDutyClient.csproj`, `OutputType` `Library`. There is no demo project and
-no test project.
+One solution `src/PagerDutyClient.sln` with exactly two projects:
+
+- `src/PagerDutyClient/PagerDutyClient.csproj`, `OutputType` `Library`, the actual code.
+- `src/PagerDutyClient.Tests/PagerDutyClient.Tests.csproj`, MSTest, added in version 1.0.13.0.
+
+There is no demo project.
 
 Layout inside `src/PagerDutyClient`:
 
@@ -37,6 +40,20 @@ Layout inside `src/PagerDutyClient`:
   `DtoIncidentRequest` and `DtoIncidentDataRequest` are internal.
 - `GlobalUsings.cs`: all usings of the project.
 
+Layout inside `src/PagerDutyClient.Tests`:
+
+- `PagerDutyClientTests.cs`: the REST API client. The `Token token=` prefix of the authorization
+  header, the query parameters, the repeated `service_ids[]`, the deserialization of an answer, the
+  acknowledge and resolve payloads, an error status code and the argument validation.
+- `PagerDutyClientV2Tests.cs`: the events API client. The endpoint, the payload of a trigger, the
+  missing deduplication key of a trigger, the key of an acknowledge and a resolve, every severity
+  and an error status code.
+- `TestHttpMessageHandler.cs`: an `HttpMessageHandler` that records the request and answers from a
+  canned status code and body. It is the reason the tests need no network.
+- `TestDataProvider.cs`: the tokens, identifiers and the canned incidents answer both test classes
+  use, plus a Serilog logger without a sink.
+- `GlobalUsings.cs`: all usings of the test project, including the alias `RestClient`.
+
 Repository root: `README.md` (the only user documentation, it is packed into the NuGet package),
 `Changelog.md`, `Updating.md` (the manual release checklist from before these instructions existed),
 `License.txt` (MIT), `Icon.png`, `BuildAndPushPackage.bat`, `Delete-BIN-OBJ-Folders.bat`,
@@ -46,6 +63,10 @@ Repository root: `README.md` (the only user documentation, it is packed into the
 
 ```powershell
 dotnet build src/PagerDutyClient.sln -c Release
+```
+
+```powershell
+dotnet test src/PagerDutyClient.sln -c Release
 ```
 
 - Target frameworks `net8.0;net10.0`, so every change is compiled twice. Nothing in the code is
@@ -64,8 +85,12 @@ dotnet build src/PagerDutyClient.sln -c Release
   configured globally on this machine. If one of them answers 404 for a public package, restore
   fails with `NU1301`. Then build with an explicit source:
   `dotnet build src/PagerDutyClient.sln --source https://api.nuget.org/v3/index.json`.
-- There are no tests and no demo project, so a behaviour change is verified by reading the code and
-  by the build. Never claim a test run happened without running it.
+- The library is built for two frameworks, the test project only for `net10.0`. Tests are MSTest,
+  with the same package set as the sibling repositories: `Microsoft.NET.Test.Sdk`,
+  `MSTest.TestAdapter`, `MSTest.TestFramework`, `coverlet.collector` and `GitVersion.MsBuild`.
+  `dotnet test` runs 26 tests. They need no network and no PagerDuty account, every request ends in
+  `TestHttpMessageHandler` instead of a socket, and nothing is written outside of `bin` and `obj`.
+  Never claim a test run happened without running it.
 
 ## Code conventions
 
@@ -110,9 +135,11 @@ Do not silently "clean up" these, they are existing behaviour:
   empty result from a failed request, and a non success status code is logged but never thrown. That
   is deliberate for an alarming library that must not take the caller down with it. Whoever changes
   it changes the contract of the whole package.
-- **One `HttpClient` per instance, never disposed.** Both classes create their `HttpClient` in the
-  constructor and neither implements `IDisposable`. Long lived client instances are the intended
-  usage.
+- **One `HttpClient` per instance, never disposed.** Both classes create their `HttpClient` from the
+  base address they are given and neither implements `IDisposable`. Long lived client instances are
+  the intended usage. Both also have a second constructor that takes a ready made `HttpClient`. That
+  overload exists so that the tests can put a handler in front of it, and it is what a caller with
+  an `IHttpClientFactory` uses. Do not remove it.
 - **The mapping helpers have a silent default branch.** `GetSeverity` falls back to `info`,
   `GetEventAction` to `trigger` and `GetIncidentRequestType` to `acknowledged`. A new enum member
   without a new switch arm therefore ships as a wrong wire value instead of an exception.

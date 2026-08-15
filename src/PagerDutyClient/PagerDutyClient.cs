@@ -41,10 +41,21 @@ public class PagerDutyClient
     /// <param name="apiToken">The API token.</param>
     /// <param name="apiBaseAddress">The PagerDuty API base address.</param>
     public PagerDutyClient(ILogger logger, string apiToken, string apiBaseAddress = "https://api.pagerduty.com")
+        : this(logger, apiToken, new HttpClient { BaseAddress = new Uri(apiBaseAddress) })
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PagerDutyClient"/> class with a caller provided HTTP client.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="apiToken">The API token.</param>
+    /// <param name="httpClient">The HTTP client to use, its base address needs to point to the PagerDuty API.</param>
+    public PagerDutyClient(ILogger logger, string apiToken, HttpClient httpClient)
     {
         this.logger = logger;
         this.apiToken = apiToken;
-        this.httpClient = new HttpClient { BaseAddress = new Uri(apiBaseAddress) };
+        this.httpClient = httpClient;
 
         // Set JSON serializer settings
         this.serializerSettings = new JsonSerializerSettings

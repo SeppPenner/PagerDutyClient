@@ -30,14 +30,24 @@ public class PagerDutyClientV2
     private readonly JsonSerializerSettings serializerSettings;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PagerDutyClient"/> class.
+    /// Initializes a new instance of the <see cref="PagerDutyClientV2"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="eventsApiBaseAddress">The PagerDuty events API base address.</param>
     public PagerDutyClientV2(ILogger logger, string eventsApiBaseAddress = "https://events.pagerduty.com")
+        : this(logger, new HttpClient { BaseAddress = new Uri(eventsApiBaseAddress) })
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PagerDutyClientV2"/> class with a caller provided HTTP client.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="eventsHttpClient">The HTTP client to use, its base address needs to point to the PagerDuty events API.</param>
+    public PagerDutyClientV2(ILogger logger, HttpClient eventsHttpClient)
     {
         this.logger = logger;
-        this.eventsHttpClient = new HttpClient { BaseAddress = new Uri(eventsApiBaseAddress) };
+        this.eventsHttpClient = eventsHttpClient;
 
         // Set JSON serializer settings
         this.serializerSettings = new JsonSerializerSettings
