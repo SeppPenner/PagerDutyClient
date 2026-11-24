@@ -69,8 +69,9 @@ dotnet build src/PagerDutyClient.sln -c Release
 dotnet test src/PagerDutyClient.sln -c Release
 ```
 
-- Target frameworks `net8.0;net10.0`, so every change is compiled twice. Nothing in the code is
-  Windows specific. Net 9.0 was dropped in version 1.0.13.0 because it is out of support.
+- Target frameworks `net10.0;net11.0`, so every change is compiled twice and building needs the
+  .NET 11 SDK. Nothing in the code is Windows specific. Net 9.0 was dropped in version 1.0.13.0
+  because it is out of support, Net 8.0 after 1.0.13.0.
 - Almost all build properties live directly in `src/PagerDutyClient/PagerDutyClient.csproj`.
   `src/Directory.Build.props` exists but sets nothing except `GenerateDocumentationFile`, which is
   why a missing XML doc comment is a build error here.
@@ -85,7 +86,8 @@ dotnet test src/PagerDutyClient.sln -c Release
   globally on this machine at times, on 2026-11-24 only nuget.org was registered. If a private feed
   answers 404 for a public package, restore fails with `NU1301`. Then build with an explicit source:
   `dotnet build src/PagerDutyClient.sln --source https://api.nuget.org/v3/index.json`.
-- The library is built for two frameworks, the test project only for `net10.0`. Tests are MSTest,
+- The library is built for two frameworks, the test project only for `net11.0`, the newest
+  framework the library targets, keep it there. Tests are MSTest,
   with the same package set as the sibling repositories: `Microsoft.NET.Test.Sdk`,
   `MSTest.TestAdapter`, `MSTest.TestFramework`, `coverlet.collector` and `GitVersion.MsBuild`.
   `dotnet test` runs 26 tests. They need no network and no PagerDuty account, every request ends in
