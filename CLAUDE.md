@@ -230,9 +230,9 @@ The version in the `Changelog.md` has four parts (`1.0.13.0`), the tag has three
 `Updating.md` holds the same steps in short form for the reader of the repository, keep the two in
 sync.
 
-nuget.org holds every tagged version from 1.0.0 to 1.0.13. On 2026-11-24 no tag had a GitHub
-release yet, and GitHub Packages held 1.0.0 to 1.0.5 and 1.0.10 to 1.0.13, the history there is
-incomplete.
+nuget.org and GitHub Packages hold every tagged version from 1.0.0 to 1.0.14, and every tag has a
+GitHub release. The missing versions on GitHub Packages and the releases were added on 2026-11-24.
+
 ## Git
 
 - Include the full GitHub pull request or issue URL in the body of each related commit on a `Refs:`
