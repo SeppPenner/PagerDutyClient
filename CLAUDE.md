@@ -55,7 +55,7 @@ Layout inside `src/PagerDutyClient.Tests`:
 - `GlobalUsings.cs`: all usings of the test project, including the alias `RestClient`.
 
 Repository root: `README.md` (the only user documentation, it is packed into the NuGet package),
-`Changelog.md`, `Updating.md` (the manual release checklist from before these instructions existed),
+`Changelog.md`, `Updating.md` (the release steps in short form, kept in sync with `## Releasing` below),
 `License.txt` (MIT), `Icon.png`, `BuildAndPushPackage.bat`, `Delete-BIN-OBJ-Folders.bat`,
 `.gitattributes` and `.gitignore`. There is no `HowToUse.md` and no screenshots.
 
@@ -81,9 +81,9 @@ dotnet test src/PagerDutyClient.sln -c Release
   vulnerable transitive package fails the build too.
 - Versions come from GitVersion.MsBuild out of the git tags, for example `1.0.13-3` for the third
   commit after tag `1.0.12`. Never edit a version property or an assembly version by hand.
-- Restore needs nuget.org. Several private feeds (DevExpress, Telerik, GitHub Packages) are
-  configured globally on this machine. If one of them answers 404 for a public package, restore
-  fails with `NU1301`. Then build with an explicit source:
+- Restore needs nuget.org. Private feeds (DevExpress, Telerik, GitHub Packages) were configured
+  globally on this machine at times, on 2026-11-24 only nuget.org was registered. If a private feed
+  answers 404 for a public package, restore fails with `NU1301`. Then build with an explicit source:
   `dotnet build src/PagerDutyClient.sln --source https://api.nuget.org/v3/index.json`.
 - The library is built for two frameworks, the test project only for `net10.0`. Tests are MSTest,
   with the same package set as the sibling repositories: `Microsoft.NET.Test.Sdk`,
@@ -171,23 +171,67 @@ Do not silently "clean up" these, they are existing behaviour:
 
 ## Releasing
 
+**Every new version is released completely.** Changelog, README, nuget.org, GitHub Packages and a
+GitHub release belong to every version, none of these steps is optional and none of them waits for
+a separate request.
+
 1. Make the change.
 2. Add an entry at the top of `Changelog.md` in the existing format:
    `* **Version 1.0.13.0 (2026-08-15)** : Short description.`
 3. Update `PackageReleaseNotes` in `src/PagerDutyClient/PagerDutyClient.csproj` to the same text,
-   in the format `Version 1.0.13.0 (2026-08-15): Short description.`
-4. Commit that.
-5. Tag the commit with the plain version number, no `v` prefix (`1.0.12`, `1.0.11`, ...). The
+   in the format `Version 1.0.13.0 (2026-08-15): Short description.` It is the only place in the
+   build files that names a version, and it is duplicated from the changelog by hand.
+4. Update `README.md` for every version. The `## Available for` list has to match the target
+   frameworks, the usage sample has to compile against the current API, and nothing there may
+   describe a state the package has left behind. The README is packed into the package.
+5. Commit that.
+6. Tag the commit with the plain version number, no `v` prefix (`1.0.12`, `1.0.11`, ...). The
    existing tags are lightweight tags, create new ones the same way.
-6. Push the commits and the tag.
-7. Only then run `BuildAndPushPackage.bat`. The order matters: the package version comes from
-   GitVersion, so building before the tag exists burns a prerelease version such as `1.0.13-3` into
-   the package. The script needs `NUGET_API_KEY` and `GITHUB_API_KEY` in the environment and ends in
-   a `PAUSE`.
+7. Push the commits and the tag.
+8. Only then build the package, and build it while the tag is the newest commit. GitVersion takes
+   the version from the tag plus the distance to it, so a build before the tag or after another
+   commit produces a prerelease version like `1.0.14-3+Branch.master.Sha...`, and that version
+   would end up on nuget.org. `git describe --tags` has to answer with the plain tag.
+9. Publish to nuget.org with `BuildAndPushPackage.bat`, started from the repository root, its first
+   line is `cd .\src`. It deletes every `bin` and `obj` below `src`, builds `-c Release` and pushes
+   the `.nupkg` and the `.snupkg` to nuget.org with `%NUGET_API_KEY%` and to the NuGet source named
+   `github` with `%GITHUB_API_KEY%`. **Do not run it as it is now:** `ECHO` is on at the four
+   `dotnet nuget push` lines and they carry no leading `@`, so cmd prints each of them after the
+   variable expansion, with both API keys in plain text, into the console and every log or
+   transcript of the run. Prefix those four lines with `@` first, as in the sibling repositories.
+   The script ends with `PAUSE`, so it wants a console. Call it with its full path: the Claude Code
+   shell sets `NoDefaultCurrentDirectoryInExePath=1`, so cmd does not find a bare
+   `BuildAndPushPackage.bat` in the current directory. Because it always rebuilds, it is only
+   correct as long as no commit sits on top of the tag. If one does, push the package that was
+   built from the tagged state instead, by its file name and not with the wildcard, because
+   `GeneratePackageOnBuild` leaves a `.nupkg` of every intermediate build in `bin`:
+   `dotnet nuget push HaemmerElectronics.SeppPenner.PagerDutyClient.1.0.13.nupkg -s "nuget.org" --skip-duplicate -k %NUGET_API_KEY%`
+   in `src/PagerDutyClient/bin/Release`. That command takes the matching `.snupkg` with it. A push
+   to nuget.org cannot be taken back, the version is burned even after unlisting. nuget.org needs a
+   few minutes to validate a new version before it is listed.
+10. Publish the same `.nupkg` to GitHub Packages,
+    `https://nuget.pkg.github.com/SeppPenner/index.json`. The script only reaches it if a NuGet
+    source named `github` is registered on the machine, `dotnet nuget list source` shows that. On
+    2026-11-24 only nuget.org was registered here, so the two `github` lines of the script fail
+    and the push has to be done by hand in `src/PagerDutyClient/bin/Release`:
+    `dotnet nuget push HaemmerElectronics.SeppPenner.PagerDutyClient.1.0.13.nupkg -s https://nuget.pkg.github.com/SeppPenner/index.json --skip-duplicate --api-key <token>`.
+    The API key is a GitHub token with the scope `write:packages`, for example from
+    `gh auth token`. If `gh auth status` lists no `write:packages`, the user has to run
+    `gh auth refresh -h github.com -s write:packages,read:packages`, it needs a browser login.
+    GitHub Packages takes no symbol packages, push the `.nupkg` only.
+11. Create the GitHub release:
+    `gh release create 1.0.13 -R SeppPenner/PagerDutyClient --verify-tag --latest --title "Version 1.0.13.0 (2026-08-15)" --notes-file <file>`.
+    The notes are the changelog sentence plus the line
+    `NuGet: https://www.nuget.org/packages/HaemmerElectronics.SeppPenner.PagerDutyClient/1.0.13`.
+    Write credits as `` `@name` `` in backticks, a bare `@name` notifies that person again.
 
 The version in the `Changelog.md` has four parts (`1.0.13.0`), the tag has three (`1.0.13`).
-`Updating.md` describes the same process in five short lines, keep the two in sync.
+`Updating.md` holds the same steps in short form for the reader of the repository, keep the two in
+sync.
 
+nuget.org holds every tagged version from 1.0.0 to 1.0.13. On 2026-11-24 no tag had a GitHub
+release yet, and GitHub Packages held 1.0.0 to 1.0.5 and 1.0.10 to 1.0.13, the history there is
+incomplete.
 ## Git
 
 - **Never amend a commit.** No `git commit --amend`, not for a typo in the message, not to add a
